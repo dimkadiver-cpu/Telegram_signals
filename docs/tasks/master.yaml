@@ -84,3 +84,17 @@ phases:
       - {id: F4-03, title: API REST templates, owner_role: BACKEND, dependencies: [F3-03, F4-01], status: todo}
       - {id: F4-04, title: Dashboard frontend, owner_role: BACKEND, dependencies: [F4-01], status: todo}
       - {id: F4-05, title: Test API, owner_role: TEST, dependencies: [F4-02, F4-03], status: todo}
+
+  - id: F5
+    name: Reliability & Hardening
+    gate: F3
+    tasks:
+      - {id: F5-01, title: Distinzione OPEN vs ADD nel lifecycle posizione, owner_role: BACKEND, dependencies: [F1-05, F1-06], status: todo}
+      - {id: F5-02, title: Keepalive listenKey Binance user stream, owner_role: BACKEND, dependencies: [F1-04], status: todo}
+      - {id: F5-03, title: Persistenza e restore stato posizioni su restart, owner_role: BACKEND, dependencies: [F1-01, F1-06], status: todo}
+      - {id: F5-04, title: Validazione esplicita token Telegram in init_bot, owner_role: TELEGRAM, dependencies: [F1-08], status: todo}
+      - {id: F5-05, title: Timeout FSM edit draft e reset automatico, owner_role: TELEGRAM, dependencies: [F1-09], status: todo}
+      - {id: F5-06, title: Retry/backoff su errori Telegram 429, owner_role: TELEGRAM, dependencies: [F1-10], status: todo}
+      - {id: F5-07, title: Test resilienza restart stato posizioni, owner_role: TEST, dependencies: [F5-03], status: todo}
+      - {id: F5-08, title: Test resilienza retry Telegram 429, owner_role: TEST, dependencies: [F5-06], status: todo}
+      - {id: F5-09, title: Test longevity stream Binance con keepalive, owner_role: TEST, dependencies: [F5-02], status: todo}

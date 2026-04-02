@@ -49,6 +49,26 @@
 
 ---
 
+## Distinzione esplicita: completamento fase vs debito tecnico
+
+### Fase completata (delivery)
+
+- Scope MVP F1 consegnato e task `F1-01..F1-13` marcati `done` su `docs/tasks/master.yaml`.
+- Regressione F1 (unit/integration/e2e) con esito positivo all'ultimo ciclo validato.
+
+### Debito tecnico residuo (non bloccante per chiusura F1)
+
+- F1-04: keepalive `listenKey` Binance non esplicitato nel listener.
+- F1-05: distinzione semantica `OPEN` vs `ADD` non ancora implementata.
+- F1-06: stato posizioni solo in memoria (assenza restore/persistenza robusta).
+- F1-08: validazione esplicita token bot in bootstrap da irrobustire.
+- F1-09: FSM edit senza timeout.
+- F1-10: dispatcher senza retry specifico per rate limit `429`.
+
+Nota: i punti sopra sono tracciati operativamente in `GAPS_RISKS.md` e backlog dedicato in `docs/tasks/master.yaml` (fase Reliability).
+
+---
+
 ## Note agente
 
 - Corretto mapping `OPEN/CLOSE` nel normalizer Binance usando flag `R` (`reduceOnly`).
