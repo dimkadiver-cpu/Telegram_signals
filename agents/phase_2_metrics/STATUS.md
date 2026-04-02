@@ -23,7 +23,7 @@
 | Suite                        | Ultimo risultato | Data | Agente |
 |-----------------------------|-----------------|------|--------|
 | `tests/unit/test_metrics`   | ✅ pass (`5 passed`)  | 2026-04-02 | backend/test |
-| `tests/unit/test_templates` | ✅ pass (`4 passed`)  | 2026-04-02 | backend/test |
+| `tests/unit/test_templates` | ✅ pass (`7 passed`)  | 2026-04-02 | backend/test |
 | `tests/e2e/test_full_pipeline.py` | ✅ pass (`1 passed`)  | 2026-04-02 | backend/test |
 
 ---
@@ -43,3 +43,11 @@
 
 - Metriche rischio rese side-aware (`LONG`/`SHORT`) e robustite per assenza di SL/TP.
 - Template `open.j2` aggiornato per non renderizzare valori `None`.
+
+---
+
+## Debito tecnico residuo F2
+
+- SL/TP spesso non disponibili dal solo evento exchange: servono integrazione ordini condizionati o input manuale utente.
+- `effective_leverage` resta basata su `capital_usd` statico, non sul margine realtime exchange.
+- `delta_exposure` usa `event.price` e non mark price live: precisione migliorabile.

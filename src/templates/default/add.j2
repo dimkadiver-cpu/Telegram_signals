@@ -4,5 +4,7 @@ Entry avg: `{{ entry_price }}`
 New size:  `{{ size }}`
 {% if metrics %}
 Exposure:  `${{ metrics.delta_exposure }}`
+{% if metrics.effective_leverage is not none %}
 Leva:      `{{ metrics.effective_leverage }}x`
+{% endif %}
 {% endif %}
