@@ -5,6 +5,7 @@ from src.config import Settings
 from src.db.session import init_db, create_tables
 from src.db.models import Trader
 from src.db.session import get_session
+from src.db.position_repository import PositionRepository
 from src.exchange.listener_manager import ListenerManager
 from src.events.normalizer import EventNormalizer
 from src.trade_engine.engine import TradeEngine
@@ -23,10 +24,16 @@ logger = logging.getLogger(__name__)
 settings = Settings()
 
 
-async def build_pipeline(bot, draft_manager: DraftManager) -> None:
-    """Wire normalizer → engine → metrics → template → draft."""
+async def build_pipeline(
+    bot, draft_manager: DraftManager, position_repo: PositionRepository
+) -> tuple:
+    """Wire normalizer → engine → metrics → template → draft.
+
+    Returns (on_raw_event callback, TradeEngine) so the caller can restore
+    persisted positions into the engine before starting listeners.
+    """
     normalizer = EventNormalizer()
-    engine = TradeEngine()
+    engine = TradeEngine(position_repo=position_repo)
     calculator = MetricCalculator()
     renderer = TemplateRenderer()
     template_store = TemplateStore()
@@ -70,7 +77,7 @@ async def build_pipeline(bot, draft_manager: DraftManager) -> None:
             message_text=message_text,
         )
 
-    return on_raw_event
+    return on_raw_event, engine
 
 
 async def main() -> None:
@@ -83,8 +90,13 @@ async def main() -> None:
     dispatcher = MessageDispatcher(bot)
     draft_manager = DraftManager(bot)
 
-    on_event = await build_pipeline(bot, draft_manager)
+    position_repo = PositionRepository()
+    on_event, engine = await build_pipeline(bot, draft_manager, position_repo)
     listener_manager = ListenerManager(on_event=on_event)
+
+    open_positions = await position_repo.load_open_positions()
+    if open_positions:
+        engine.restore_positions(open_positions)
 
     telegram_router.data["dispatcher"] = dispatcher
     telegram_router.data["listener_manager"] = listener_manager

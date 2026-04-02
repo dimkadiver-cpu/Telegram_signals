@@ -1,9 +1,12 @@
 import logging
+from datetime import datetime, timezone
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
+
+_EDIT_TIMEOUT_SECONDS = 300  # 5 minutes
 from sqlmodel import select
 from src.db.models import TelegramDraft, DraftStatus, Trader
 from src.db.session import get_session
@@ -44,15 +47,31 @@ async def on_approve(callback: CallbackQuery, dispatcher: MessageDispatcher) -> 
 @router.callback_query(lambda c: c.data and c.data.startswith("edit:"))
 async def on_edit(callback: CallbackQuery, state: FSMContext) -> None:
     draft_id = int(callback.data.split(":")[1])
-    await state.update_data(draft_id=draft_id)
+    await state.update_data(
+        draft_id=draft_id,
+        edit_started_at=datetime.now(tz=timezone.utc).timestamp(),
+    )
     await state.set_state(EditState.waiting_for_text)
-    await callback.message.reply("Scrivi il nuovo testo del messaggio:")
+    await callback.message.reply(
+        f"Scrivi il nuovo testo del messaggio (timeout {_EDIT_TIMEOUT_SECONDS // 60} min):"
+    )
     await callback.answer()
 
 
 @router.message(EditState.waiting_for_text)
 async def on_edit_text(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
+
+    # Auto-reset if timeout has elapsed
+    started_at = data.get("edit_started_at", 0)
+    elapsed = datetime.now(tz=timezone.utc).timestamp() - started_at
+    if elapsed > _EDIT_TIMEOUT_SECONDS:
+        await state.clear()
+        await message.reply(
+            "Sessione di modifica scaduta. Usa il pulsante Modifica per ricominciare."
+        )
+        return
+
     draft_id = data.get("draft_id")
     async for session in get_session():
         draft = await session.get(TelegramDraft, draft_id)
