@@ -38,10 +38,10 @@
 ### F3 – Multi-Trader
 - F3-01 Modello Trader e FK — `done`
 - F3-02 ListenerManager multi-trader — `done`
-- F3-03 Template personalizzati trader — `todo`
-- F3-04 Canali Telegram separati — `todo`
+- F3-03 Template personalizzati trader — `done`
+- F3-04 Canali Telegram separati — `done`
 - F3-05 Comandi admin Telegram — `todo`
-- F3-06 Test multi-trader — `todo`
+- F3-06 Test multi-trader — `done`
 
 ### F4 – Web UI
 - F4-01 Setup FastAPI — `todo`

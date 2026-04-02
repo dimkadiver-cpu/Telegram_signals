@@ -23,7 +23,8 @@ class TemplateRenderer:
         self._custom_template = custom_template
 
     def render(self, event_type: EventType, position: Position,
-               metrics: MetricsResult | None = None) -> str:
+               metrics: MetricsResult | None = None,
+               custom_template: str | None = None) -> str:
         context = {
             "symbol": position.symbol,
             "side": position.side.value,
@@ -34,7 +35,8 @@ class TemplateRenderer:
             "realized_pnl": position.realized_pnl,
             "metrics": metrics,
         }
-        if self._custom_template:
-            return self._engine.render_string(self._custom_template, context)
+        template_override = custom_template or self._custom_template
+        if template_override:
+            return self._engine.render_string(template_override, context)
         template_name = _EVENT_TEMPLATE_MAP.get(event_type, "open.j2")
         return self._engine.render_file(template_name, context)
