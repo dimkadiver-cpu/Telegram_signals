@@ -1,8 +1,12 @@
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 from src.events.models import TradeEvent
 from src.events.types import EventType, Side
 from .position import Position, PositionStatus
+
+if TYPE_CHECKING:
+    from src.db.position_repository import PositionRepository
 
 logger = logging.getLogger(__name__)
 
@@ -10,16 +14,28 @@ logger = logging.getLogger(__name__)
 class TradeEngine:
     """Maintains position state by applying normalized trade events."""
 
-    def __init__(self) -> None:
+    def __init__(self, position_repo: "PositionRepository | None" = None) -> None:
         # In-memory store keyed by (trader_id, symbol); persisted via DB layer separately
         self._positions: dict[tuple[str, str], Position] = {}
+        self._repo = position_repo
+
+    def restore_positions(self, positions: list[Position]) -> None:
+        """Populate in-memory state from previously persisted positions."""
+        for pos in positions:
+            key = (pos.trader_id, pos.symbol)
+            self._positions[key] = pos
+        logger.info("Restored %d open position(s) from DB.", len(positions))
 
     async def process_event(self, event: TradeEvent) -> Position:
         key = (event.trader_id, event.symbol)
 
         match event.event_type:
             case EventType.OPEN:
-                position = self._open(key, event)
+                # If a position already exists for this key, treat fill as ADD
+                if key in self._positions:
+                    position = self._add(key, event)
+                else:
+                    position = self._open(key, event)
             case EventType.ADD:
                 position = self._add(key, event)
             case EventType.REDUCE:
@@ -31,6 +47,8 @@ class TradeEngine:
                 position = self._positions.get(key, self._open(key, event))
 
         self._positions[key] = position
+        if self._repo is not None:
+            await self._repo.save(position)
         return position
 
     def get_position(self, trader_id: str, symbol: str) -> Position | None:

@@ -5,6 +5,8 @@ from .base_listener import BaseListener, RawEventCallback
 
 logger = logging.getLogger(__name__)
 
+_KEEPALIVE_INTERVAL = 30 * 60  # Binance recommends keepalive every 30 min (max 60)
+
 
 class BinanceListener(BaseListener):
     """Listens to Binance User Data Stream (Futures) via official SDK."""
@@ -17,6 +19,8 @@ class BinanceListener(BaseListener):
         self.testnet = testnet
         self._client: AsyncClient | None = None
         self._socket_manager: BinanceSocketManager | None = None
+        self._listen_key: str | None = None
+        self._keepalive_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         self._running = True
@@ -24,12 +28,35 @@ class BinanceListener(BaseListener):
             self.api_key, self.api_secret, testnet=self.testnet
         )
         self._socket_manager = BinanceSocketManager(self._client)
-        await self._listen_with_reconnect()
+        # Obtain initial listenKey and start keepalive before connecting
+        self._listen_key = await self._client.futures_stream_get_listen_key()
+        self._keepalive_task = asyncio.create_task(self._keepalive_loop())
+        try:
+            await self._listen_with_reconnect()
+        finally:
+            if self._keepalive_task and not self._keepalive_task.done():
+                self._keepalive_task.cancel()
 
     async def stop(self) -> None:
         self._running = False
+        if self._keepalive_task and not self._keepalive_task.done():
+            self._keepalive_task.cancel()
         if self._client:
             await self._client.close_connection()
+
+    async def _keepalive_loop(self) -> None:
+        """Periodically renew the futures user stream listenKey."""
+        while self._running:
+            await asyncio.sleep(_KEEPALIVE_INTERVAL)
+            if not self._running:
+                break
+            try:
+                self._listen_key = await self._client.futures_stream_get_listen_key()
+                logger.debug("Renewed Binance listenKey for trader %s.", self.trader_id)
+            except asyncio.CancelledError:
+                break
+            except Exception as exc:
+                logger.warning("Failed to renew Binance listenKey: %s", exc)
 
     async def _listen_with_reconnect(self) -> None:
         backoff = 1

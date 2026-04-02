@@ -89,12 +89,12 @@ phases:
     name: Reliability & Hardening
     gate: F3
     tasks:
-      - {id: F5-01, title: Distinzione OPEN vs ADD nel lifecycle posizione, owner_role: BACKEND, dependencies: [F1-05, F1-06], status: todo}
-      - {id: F5-02, title: Keepalive listenKey Binance user stream, owner_role: BACKEND, dependencies: [F1-04], status: todo}
-      - {id: F5-03, title: Persistenza e restore stato posizioni su restart, owner_role: BACKEND, dependencies: [F1-01, F1-06], status: todo}
-      - {id: F5-04, title: Validazione esplicita token Telegram in init_bot, owner_role: TELEGRAM, dependencies: [F1-08], status: todo}
-      - {id: F5-05, title: Timeout FSM edit draft e reset automatico, owner_role: TELEGRAM, dependencies: [F1-09], status: todo}
-      - {id: F5-06, title: Retry/backoff su errori Telegram 429, owner_role: TELEGRAM, dependencies: [F1-10], status: todo}
-      - {id: F5-07, title: Test resilienza restart stato posizioni, owner_role: TEST, dependencies: [F5-03], status: todo}
-      - {id: F5-08, title: Test resilienza retry Telegram 429, owner_role: TEST, dependencies: [F5-06], status: todo}
-      - {id: F5-09, title: Test longevity stream Binance con keepalive, owner_role: TEST, dependencies: [F5-02], status: todo}
+      - {id: F5-01, title: Distinzione OPEN vs ADD nel lifecycle posizione, owner_role: BACKEND, dependencies: [F1-05, F1-06], status: done, evidence: "engine.py: route OPEN→ADD when position key exists in _positions"}
+      - {id: F5-02, title: Keepalive listenKey Binance user stream, owner_role: BACKEND, dependencies: [F1-04], status: done, evidence: "binance_listener.py: _keepalive_loop task renews listenKey every 30min"}
+      - {id: F5-03, title: Persistenza e restore stato posizioni su restart, owner_role: BACKEND, dependencies: [F1-01, F1-06], status: done, evidence: "db/position_repository.py: save/load_open_positions; engine.restore_positions(); main.py: restore on startup"}
+      - {id: F5-04, title: Validazione esplicita token Telegram in init_bot, owner_role: TELEGRAM, dependencies: [F1-08], status: done, evidence: "telegram/bot.py: _validate_token_format() regex check before Bot instantiation"}
+      - {id: F5-05, title: Timeout FSM edit draft e reset automatico, owner_role: TELEGRAM, dependencies: [F1-09], status: done, evidence: "handlers.py: edit_started_at stored in FSM state; on_edit_text checks elapsed vs _EDIT_TIMEOUT_SECONDS"}
+      - {id: F5-06, title: Retry/backoff su errori Telegram 429, owner_role: TELEGRAM, dependencies: [F1-10], status: done, evidence: "dispatcher.py: retry loop up to _MAX_RETRIES=5 on TelegramRetryAfter with retry_after backoff"}
+      - {id: F5-07, title: Test resilienza restart stato posizioni, owner_role: TEST, dependencies: [F5-03], status: done, evidence: "tests/integration/test_f5_restart_resilience.py"}
+      - {id: F5-08, title: Test resilienza retry Telegram 429, owner_role: TEST, dependencies: [F5-06], status: done, evidence: "tests/integration/test_f5_telegram_429.py"}
+      - {id: F5-09, title: Test longevity stream Binance con keepalive, owner_role: TEST, dependencies: [F5-02], status: done, evidence: "tests/integration/test_f5_binance_keepalive.py"}
