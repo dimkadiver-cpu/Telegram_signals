@@ -77,3 +77,14 @@
 **Impatto:** Sistema supporta un solo trader fino alla Fase 3.
 **Proposta:** Accettato come limitazione MVP. Integrare `ListenerManager` in Fase 3.
 **Stato:** Accettato — limitazione voluta Fase 1
+
+---
+
+### [2026-04-02] [F1-05] Misclassificazione CLOSE su BUY FILLED (R=False)
+
+**Tipo:** Gap
+**Severità:** Media
+**Descrizione:** Alcuni payload Binance `BUY` filled venivano classificati come `EventType.CLOSE` per una condizione su `ps=BOTH` non corretta.
+**Impatto:** Pipeline exchange -> normalizer -> engine poteva chiudere/aprire stato non coerente sul primo evento.
+**Fix applicato:** Mapping semplificato F1 nel normalizer: `R=True => CLOSE`, altrimenti `OPEN`.
+**Stato:** Chiuso — fix applicato il 2026-04-02
