@@ -50,3 +50,23 @@ def test_metrics_short_position():
     result = calc.calculate(pos, config, current_price=40000)
     assert result.risk_pct == pytest.approx(5.0)
     assert result.rr == pytest.approx(2.0)
+
+
+def test_metrics_sl_without_tp():
+    calc = MetricCalculator()
+    config = RiskConfig(capital_usd=10_000)
+    pos = make_position(sl=38000, tp=None)
+    result = calc.calculate(pos, config, current_price=40000)
+    assert result.risk_pct == pytest.approx(5.0)
+    assert result.risk_usd == pytest.approx(500.0)
+    assert result.rr is None
+
+
+def test_metrics_ignores_non_adverse_sl_for_long():
+    calc = MetricCalculator()
+    config = RiskConfig(capital_usd=10_000)
+    pos = make_position(sl=42000, tp=46000)
+    result = calc.calculate(pos, config, current_price=40000)
+    assert result.risk_pct is None
+    assert result.risk_usd is None
+    assert result.rr is None

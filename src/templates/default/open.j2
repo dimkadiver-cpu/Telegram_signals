@@ -5,7 +5,11 @@ Size:   `{{ size }}`
 {% if stop_loss %}SL:     `{{ stop_loss }}`{% endif %}
 {% if take_profit %}TP:     `{{ take_profit }}`{% endif %}
 {% if metrics %}
+{% if metrics.risk_pct is not none and metrics.risk_usd is not none %}
 Risk:   `{{ metrics.risk_pct }}%` (${{ metrics.risk_usd }})
+{% endif %}
 {% if metrics.rr %}RR:     `{{ metrics.rr }}`{% endif %}
+{% if metrics.effective_leverage is not none %}
 Leva:   `{{ metrics.effective_leverage }}x`
+{% endif %}
 {% endif %}
