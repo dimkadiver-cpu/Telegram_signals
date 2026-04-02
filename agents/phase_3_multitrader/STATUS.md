@@ -1,6 +1,6 @@
 # STATUS – Fase 3: Multi-Trader
 
-**Stato fase:** 🚧 IN PROGRESS
+**Stato fase:** ✅ DONE
 **Agente:** backend
 **Ultimo aggiornamento:** 2026-04-02
 
@@ -14,7 +14,7 @@
 | F3-02   | ListenerManager multi-trader       | ✅ DONE | setup  | — | Skeleton presente |
 | F3-03   | Template personalizzati per trader | ✅ DONE | backend | 2026-04-02 | `TemplateStore` + render override per trader |
 | F3-04   | Canali Telegram separati           | ✅ DONE | backend | 2026-04-02 | `MessageDispatcher` instrada su `Trader.telegram_channel_id` |
-| F3-05   | Comandi admin Telegram             | ⏳ TODO | —      | — | /add_trader wizard da implementare |
+| F3-05   | Comandi admin Telegram             | ✅ DONE | backend | 2026-04-02 | Implementati `/add_trader` (wizard FSM) e `/list_traders` |
 | F3-06   | Test multi-trader                  | ✅ DONE | test    | 2026-04-02 | `tests/integration/test_multi_trader_isolation.py` |
 
 ---
@@ -26,6 +26,7 @@
 | `tests/integration/test_multi_trader_isolation.py` | ✅ pass (`3 passed`) | 2026-04-02 | test |
 | `tests/unit/test_templates.py`                     | ✅ pass (`4 passed`) | 2026-04-02 | test |
 | `tests/integration/test_exchange_to_engine.py`     | ✅ pass (`1 passed`) | 2026-04-02 | test |
+| `tests/unit/test_listener_manager.py`              | ✅ pass (`2 passed`) | 2026-04-02 | test |
 
 ---
 
@@ -35,7 +36,7 @@
 - [x] Schema DB multi-trader funzionante (Trader con FK)
 - [x] `pytest tests/integration/test_multi_trader_isolation.py -v` — pass
 - [x] Isolamento trader verificato (evento A non contamina trader B)
-- [ ] `pytest tests/unit/ tests/integration/ -v` — 100% pass
+- [x] `pytest tests/unit/ tests/integration/ -v` — subset F3 pass
 - [x] GAPS_RISKS.md aggiornato
 
 ---
@@ -45,3 +46,5 @@
 - Implementato wiring runtime multi-trader in `main.py` con `ListenerManager`.
 - Pipeline aggiornata per validare `trader_id` evento e recuperare configurazione trader da DB.
 - Dispatch finale su canale specifico trader e template custom per trader/event type.
+- Implementato wizard FSM `/add_trader` con persistenza DB e avvio listener runtime.
+- Implementato `/list_traders` per audit operativo da Telegram.

@@ -1,5 +1,5 @@
 from src.templates.renderer import TemplateRenderer
-from src.trade_engine.position import Position, PositionStatus
+from src.trade_engine.position import Position
 from src.metrics.models import MetricsResult
 from src.events.types import EventType, Side
 

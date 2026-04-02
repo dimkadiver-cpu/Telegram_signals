@@ -87,6 +87,7 @@ async def main() -> None:
     listener_manager = ListenerManager(on_event=on_event)
 
     telegram_router.data["dispatcher"] = dispatcher
+    telegram_router.data["listener_manager"] = listener_manager
 
     loop = asyncio.get_running_loop()
     stop_event = asyncio.Event()
