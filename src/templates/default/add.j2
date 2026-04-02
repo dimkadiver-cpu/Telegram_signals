@@ -1,0 +1,8 @@
+➕ *ADD {{ side }}* — `{{ symbol }}`
+
+Entry avg: `{{ entry_price }}`
+New size:  `{{ size }}`
+{% if metrics %}
+Exposure:  `${{ metrics.delta_exposure }}`
+Leva:      `{{ metrics.effective_leverage }}x`
+{% endif %}

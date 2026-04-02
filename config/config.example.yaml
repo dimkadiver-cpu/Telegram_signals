@@ -1,0 +1,20 @@
+exchange:
+  id: binance
+  api_key: "YOUR_BINANCE_API_KEY"
+  api_secret: "YOUR_BINANCE_API_SECRET"
+  testnet: false
+
+telegram:
+  bot_token: "YOUR_BOT_TOKEN"
+  review_chat_id: "YOUR_REVIEW_CHAT_ID"   # chat dove ricevi le bozze
+  channel_id: "YOUR_CHANNEL_ID"           # canale finale dove invii i segnali
+
+database:
+  url: "sqlite+aiosqlite:///./telegram_signals.db"
+  # Per produzione usa PostgreSQL:
+  # url: "postgresql+asyncpg://user:password@localhost/telegram_signals"
+
+risk:
+  capital_usd: 10000.0
+  risk_pct: 1.0       # % del capitale rischiata per trade
+  max_leverage: 10.0
