@@ -19,36 +19,32 @@ def make_event(event_type: EventType, size: float = 0.1, price: float = 40000.0)
     )
 
 
-@pytest.mark.asyncio
-async def test_open_position():
+def test_open_position():
     engine = TradeEngine()
-    pos = await engine.process_event(make_event(EventType.OPEN, size=0.1, price=40000))
+    pos = asyncio.run(engine.process_event(make_event(EventType.OPEN, size=0.1, price=40000)))
     assert pos.size == 0.1
     assert pos.avg_entry == 40000
     assert pos.status == PositionStatus.OPEN
 
 
-@pytest.mark.asyncio
-async def test_open_then_add():
+def test_open_then_add():
     engine = TradeEngine()
-    await engine.process_event(make_event(EventType.OPEN, size=0.1, price=40000))
-    pos = await engine.process_event(make_event(EventType.ADD, size=0.1, price=42000))
+    asyncio.run(engine.process_event(make_event(EventType.OPEN, size=0.1, price=40000)))
+    pos = asyncio.run(engine.process_event(make_event(EventType.ADD, size=0.1, price=42000)))
     assert pos.size == 0.2
     assert pos.avg_entry == 41000.0
 
 
-@pytest.mark.asyncio
-async def test_open_then_close():
+def test_open_then_close():
     engine = TradeEngine()
-    await engine.process_event(make_event(EventType.OPEN, size=0.1, price=40000))
-    pos = await engine.process_event(make_event(EventType.CLOSE, size=0.1, price=45000))
+    asyncio.run(engine.process_event(make_event(EventType.OPEN, size=0.1, price=40000)))
+    pos = asyncio.run(engine.process_event(make_event(EventType.CLOSE, size=0.1, price=45000)))
     assert pos.status == PositionStatus.CLOSED
     assert pos.realized_pnl == pytest.approx(500.0)
 
 
-@pytest.mark.asyncio
-async def test_reduce_position():
+def test_reduce_position():
     engine = TradeEngine()
-    await engine.process_event(make_event(EventType.OPEN, size=0.2, price=40000))
-    pos = await engine.process_event(make_event(EventType.REDUCE, size=0.1, price=40000))
+    asyncio.run(engine.process_event(make_event(EventType.OPEN, size=0.2, price=40000)))
+    pos = asyncio.run(engine.process_event(make_event(EventType.REDUCE, size=0.1, price=40000)))
     assert pos.size == 0.1

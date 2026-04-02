@@ -34,11 +34,9 @@ class EventNormalizer:
         timestamp = datetime.fromtimestamp(raw.get("T", 0) / 1000, tz=timezone.utc)
 
         # Determine event type
-        position_side = order.get("ps", "BOTH")
-        if reduce_only or position_side == "BOTH" and order.get("S") != order.get("ps"):
-            event_type = EventType.CLOSE
-        else:
-            event_type = EventType.OPEN  # TODO: distinguish ADD/REDUCE from open position
+        # In F1 payloads, `R=True` explicitly marks reduce/close orders.
+        # Keep non-reduce fills as OPEN to preserve current engine contract.
+        event_type = EventType.CLOSE if reduce_only else EventType.OPEN
 
         return TradeEvent(
             event_type=event_type,

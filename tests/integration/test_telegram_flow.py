@@ -1,14 +1,11 @@
 """Integration test: template rendering → draft creation (mock bot)."""
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from src.templates.renderer import TemplateRenderer
 from src.trade_engine.position import Position
 from src.metrics.models import MetricsResult
 from src.events.types import EventType, Side
 
 
-@pytest.mark.asyncio
-async def test_render_and_draft_text():
+def test_render_and_draft_text():
     renderer = TemplateRenderer()
     pos = Position(
         trader_id="1",

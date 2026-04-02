@@ -27,19 +27,18 @@ RAW_CLOSE = {
 }
 
 
-@pytest.mark.asyncio
-async def test_open_and_close_pipeline():
+def test_open_and_close_pipeline():
     normalizer = EventNormalizer()
     engine = TradeEngine()
 
     open_event = normalizer.normalize(RAW_OPEN)
     assert open_event is not None
-    pos = await engine.process_event(open_event)
+    pos = asyncio.run(engine.process_event(open_event))
     assert pos.status == PositionStatus.OPEN
     assert pos.size == 0.1
 
     close_event = normalizer.normalize(RAW_CLOSE)
     assert close_event is not None
-    pos = await engine.process_event(close_event)
+    pos = asyncio.run(engine.process_event(close_event))
     assert pos.status == PositionStatus.CLOSED
     assert pos.realized_pnl == pytest.approx(500.0)
