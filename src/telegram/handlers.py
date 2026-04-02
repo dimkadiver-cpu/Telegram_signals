@@ -5,9 +5,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from sqlmodel import select
-from src.db.models import TelegramDraft, DraftStatus
+from src.db.models import TelegramDraft, DraftStatus, Trader
 from src.db.session import get_session
 from src.dispatcher.dispatcher import MessageDispatcher
+from src.exchange.listener_manager import ListenerManager
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -15,6 +16,14 @@ router = Router()
 
 class EditState(StatesGroup):
     waiting_for_text = State()
+
+
+class AddTraderState(StatesGroup):
+    waiting_for_name = State()
+    waiting_for_api_key = State()
+    waiting_for_api_secret = State()
+    waiting_for_review_chat_id = State()
+    waiting_for_channel_id = State()
 
 
 @router.callback_query(lambda c: c.data and c.data.startswith("approve:"))
@@ -68,11 +77,79 @@ async def on_delete(callback: CallbackQuery) -> None:
 
 @router.message(Command("add_trader"))
 async def cmd_add_trader(message: Message, state: FSMContext) -> None:
-    # TODO: implement FSM wizard for trader registration
-    await message.reply("Wizard add_trader – da implementare (F3-05).")
+    await state.set_state(AddTraderState.waiting_for_name)
+    await message.reply("Inserisci nome trader:")
+
+
+@router.message(AddTraderState.waiting_for_name)
+async def add_trader_name(message: Message, state: FSMContext) -> None:
+    await state.update_data(name=message.text.strip())
+    await state.set_state(AddTraderState.waiting_for_api_key)
+    await message.reply("Inserisci Binance API key:")
+
+
+@router.message(AddTraderState.waiting_for_api_key)
+async def add_trader_api_key(message: Message, state: FSMContext) -> None:
+    await state.update_data(binance_api_key=message.text.strip())
+    await state.set_state(AddTraderState.waiting_for_api_secret)
+    await message.reply("Inserisci Binance API secret:")
+
+
+@router.message(AddTraderState.waiting_for_api_secret)
+async def add_trader_api_secret(message: Message, state: FSMContext) -> None:
+    await state.update_data(binance_api_secret=message.text.strip())
+    await state.set_state(AddTraderState.waiting_for_review_chat_id)
+    await message.reply("Inserisci Telegram review chat id:")
+
+
+@router.message(AddTraderState.waiting_for_review_chat_id)
+async def add_trader_review_chat(message: Message, state: FSMContext) -> None:
+    await state.update_data(telegram_review_chat_id=message.text.strip())
+    await state.set_state(AddTraderState.waiting_for_channel_id)
+    await message.reply("Inserisci Telegram channel id di output:")
+
+
+@router.message(AddTraderState.waiting_for_channel_id)
+async def add_trader_channel(
+    message: Message,
+    state: FSMContext,
+    listener_manager: ListenerManager,
+) -> None:
+    data = await state.get_data()
+    channel_id = message.text.strip()
+
+    async for session in get_session():
+        trader = Trader(
+            name=data["name"],
+            binance_api_key=data["binance_api_key"],
+            binance_api_secret=data["binance_api_secret"],
+            telegram_review_chat_id=data["telegram_review_chat_id"],
+            telegram_channel_id=channel_id,
+            is_active=True,
+        )
+        session.add(trader)
+        await session.commit()
+        await session.refresh(trader)
+
+    await listener_manager.add_trader(trader)
+    await state.clear()
+    await message.reply(f"Trader creato: id={trader.id}, nome={trader.name}")
 
 
 @router.message(Command("list_traders"))
 async def cmd_list_traders(message: Message) -> None:
-    # TODO: query DB and list active traders
-    await message.reply("Lista traders – da implementare (F3-05).")
+    async for session in get_session():
+        result = await session.execute(select(Trader).order_by(Trader.id))
+        traders = result.scalars().all()
+    if not traders:
+        await message.reply("Nessun trader registrato.")
+        return
+
+    lines = ["Traders registrati:"]
+    for trader in traders:
+        status = "active" if trader.is_active else "inactive"
+        lines.append(
+            f"- id={trader.id} | {trader.name} | review={trader.telegram_review_chat_id} | "
+            f"channel={trader.telegram_channel_id} | {status}"
+        )
+    await message.reply("\n".join(lines))

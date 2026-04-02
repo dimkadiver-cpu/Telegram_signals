@@ -1,4 +1,3 @@
-from datetime import timezone
 from src.events.normalizer import EventNormalizer
 from src.events.types import EventType, Side
 

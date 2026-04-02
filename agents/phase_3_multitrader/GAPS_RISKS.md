@@ -35,7 +35,7 @@
 **Descrizione:** `ListenerManager.start_all()` carica i trader all'avvio e non aggiorna la lista se un trader viene aggiunto/rimosso mentre il sistema è in esecuzione.
 **Impatto:** Per aggiungere un nuovo trader bisogna riavviare il processo.
 **Proposta:** Aggiungere metodi `add_trader(trader)` e `remove_trader(trader_id)` al `ListenerManager` e chiamarli dal handler `/add_trader`.
-**Stato:** Aperto
+**Stato:** Risolto (2026-04-02) — introdotti `add_trader/remove_trader` e integrazione da handler `/add_trader`
 
 ---
 
@@ -46,6 +46,17 @@
 **Descrizione:** Il wizard raccoglie le credenziali Binance ma non le verifica prima di salvarle nel DB. Un errore di battitura causerebbe un listener che non funziona.
 **Proposta:** Dopo la raccolta, eseguire `CCXTClient.get_open_positions()` come test di connessione. Se fallisce, non salvare e notificare l'errore.
 **Stato:** Aperto
+
+---
+
+### [2026-04-02] [F3-02] Startup con 0 trader attivi
+
+**Tipo:** Gap
+**Severità:** Bassa
+**Descrizione:** Se non ci sono trader attivi, nessun listener exchange viene avviato.
+**Impatto:** Il sistema resta operativo lato Telegram ma non riceve eventi trading.
+**Proposta:** Mantenere warning esplicito a startup (già implementato) e aggiungere healthcheck dedicato in F4/F5.
+**Stato:** Accettato — mitigato da log warning esplicito in `ListenerManager.start_all()`
 
 ---
 

@@ -16,27 +16,58 @@ class ListenerManager:
     def __init__(self, on_event: RawEventCallback) -> None:
         self.on_event = on_event
         self._listeners: dict[int, BinanceListener] = {}
+        self._tasks: dict[int, asyncio.Task] = {}
+        self._lock = asyncio.Lock()
+
+    async def _start_listener(self, trader: Trader) -> None:
+        if trader.id is None:
+            return
+        if trader.id in self._listeners:
+            logger.info("Listener already running for trader %d", trader.id)
+            return
+        listener = BinanceListener(
+            trader_id=str(trader.id),
+            api_key=trader.binance_api_key,
+            api_secret=trader.binance_api_secret,
+            on_event=self.on_event,
+        )
+        self._listeners[trader.id] = listener
+        self._tasks[trader.id] = asyncio.create_task(listener.start())
+        logger.info("Started listener for trader %d (%s)", trader.id, trader.name)
+
+    async def add_trader(self, trader: Trader) -> None:
+        async with self._lock:
+            if not trader.is_active:
+                logger.info("Skip listener start for inactive trader %s", trader.id)
+                return
+            await self._start_listener(trader)
+
+    async def remove_trader(self, trader_id: int) -> None:
+        async with self._lock:
+            listener = self._listeners.pop(trader_id, None)
+            task = self._tasks.pop(trader_id, None)
+            if listener is None:
+                return
+            await listener.stop()
+            if task:
+                try:
+                    await task
+                except Exception:
+                    logger.exception("Listener task ended with error for trader %d", trader_id)
+            logger.info("Stopped listener for trader %d", trader_id)
 
     async def start_all(self) -> None:
         async for session in get_session():
-            result = await session.execute(select(Trader).where(Trader.is_active == True))
+            result = await session.execute(select(Trader).where(Trader.is_active))
             traders = result.scalars().all()
 
-        tasks = []
+        if not traders:
+            logger.warning("No active traders found: exchange listeners not started.")
+            return
         for trader in traders:
-            listener = BinanceListener(
-                trader_id=str(trader.id),
-                api_key=trader.binance_api_key,
-                api_secret=trader.binance_api_secret,
-                on_event=self.on_event,
-            )
-            self._listeners[trader.id] = listener
-            tasks.append(listener.start())
-            logger.info("Started listener for trader %d (%s)", trader.id, trader.name)
-
-        await asyncio.gather(*tasks)
+            await self.add_trader(trader)
 
     async def stop_all(self) -> None:
-        for listener in self._listeners.values():
-            await listener.stop()
-        self._listeners.clear()
+        trader_ids = list(self._listeners.keys())
+        for trader_id in trader_ids:
+            await self.remove_trader(trader_id)
