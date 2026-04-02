@@ -1,12 +1,10 @@
 """E2E test: simulated raw WS events through full pipeline (no real exchange/Telegram)."""
-import pytest
-from unittest.mock import AsyncMock, patch
+import asyncio
 from src.events.normalizer import EventNormalizer
 from src.trade_engine.engine import TradeEngine
 from src.metrics.calculator import MetricCalculator
 from src.metrics.config import RiskConfig
 from src.templates.renderer import TemplateRenderer
-from src.events.types import EventType
 from src.trade_engine.position import PositionStatus
 
 
@@ -29,8 +27,7 @@ EVENTS_SEQUENCE = [
 ]
 
 
-@pytest.mark.asyncio
-async def test_full_pipeline_sequence():
+def test_full_pipeline_sequence():
     normalizer = EventNormalizer()
     engine = TradeEngine()
     calculator = MetricCalculator()
@@ -43,7 +40,7 @@ async def test_full_pipeline_sequence():
         event = normalizer.normalize(raw)
         if event is None:
             continue
-        position = await engine.process_event(event)
+        position = asyncio.run(engine.process_event(event))
         metrics = calculator.calculate(position, config, current_price=event.price)
         text = renderer.render(event.event_type, position, metrics)
         sent_drafts.append({"text": text, "position": position})
