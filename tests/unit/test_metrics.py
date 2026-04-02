@@ -1,7 +1,7 @@
 import pytest
 from src.metrics.calculator import MetricCalculator
 from src.metrics.config import RiskConfig
-from src.trade_engine.position import Position, PositionStatus
+from src.trade_engine.position import Position
 from src.events.types import Side
 
 
