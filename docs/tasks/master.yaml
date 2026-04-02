@@ -1,0 +1,86 @@
+version: 1
+updated_at: 2026-04-02
+source_of_truth: true
+policies:
+  statuses: [todo, wip, done, blocked, review]
+  single_task_in_progress_per_agent: true
+  require_checks_for_done: true
+
+phases:
+  - id: F0
+    name: Setup & Fondamenta
+    gate: null
+    tasks:
+      - id: F0-01
+        title: Inizializza struttura progetto
+        owner_role: SETUP
+        dependencies: []
+        outputs: [pyproject.toml, .env.example, .gitignore]
+        acceptance_checks:
+          - python -c "import src"
+        status: done
+      - id: F0-02
+        title: Config e Settings
+        owner_role: SETUP
+        dependencies: [F0-01]
+        outputs: [src/config.py, config/config.example.yaml]
+        acceptance_checks:
+          - python -c "from src.config import Settings; Settings()"
+        status: done
+      - id: F0-03
+        title: DB async e migrazioni
+        owner_role: DB
+        dependencies: [F0-02]
+        outputs: [src/db/session.py, src/db/migrations/env.py]
+        acceptance_checks:
+          - PYTHONPATH=. python -c "from src.db.session import init_db"
+        status: todo
+
+  - id: F1
+    name: MVP Core
+    gate: F0
+    tasks:
+      - {id: F1-01, title: Modelli DB, owner_role: DB, dependencies: [F0-03], status: done}
+      - {id: F1-02, title: Modelli evento normalizzato, owner_role: BACKEND, dependencies: [F0-01], status: done}
+      - {id: F1-03, title: Client REST CCXT, owner_role: BACKEND, dependencies: [F0-02, F1-02], status: done}
+      - {id: F1-04, title: Listener Binance WS, owner_role: BACKEND, dependencies: [F0-02, F1-02], status: done}
+      - {id: F1-05, title: Event Normalizer, owner_role: BACKEND, dependencies: [F1-02, F1-04], status: done}
+      - {id: F1-06, title: Trade Engine, owner_role: BACKEND, dependencies: [F1-01, F1-05], status: done}
+      - {id: F1-07, title: Template Engine, owner_role: BACKEND, dependencies: [F1-06], status: done}
+      - {id: F1-08, title: Bot Telegram setup e draft, owner_role: TELEGRAM, dependencies: [F1-01, F1-07], status: done}
+      - {id: F1-09, title: Handler Telegram, owner_role: TELEGRAM, dependencies: [F1-08], status: done}
+      - {id: F1-10, title: Dispatcher, owner_role: TELEGRAM, dependencies: [F1-09], status: done}
+      - {id: F1-11, title: Entry point main.py, owner_role: BACKEND, dependencies: [F1-04, F1-05, F1-06, F1-07, F1-08, F1-10], status: done}
+      - {id: F1-12, title: Test unitari fase 1, owner_role: TEST, dependencies: [F1-05, F1-06, F1-07], status: wip}
+      - {id: F1-13, title: Test integrazione fase 1, owner_role: TEST, dependencies: [F1-11, F1-12], status: todo}
+
+  - id: F2
+    name: Metric Engine
+    gate: F1
+    tasks:
+      - {id: F2-01, title: RiskConfig e TraderConfig, owner_role: BACKEND, dependencies: [F0-02, F1-01], status: done}
+      - {id: F2-02, title: Metric Calculator, owner_role: BACKEND, dependencies: [F1-06, F2-01], status: done}
+      - {id: F2-03, title: Integrazione metriche nel pipeline, owner_role: BACKEND, dependencies: [F1-07, F1-11, F2-02], status: todo}
+      - {id: F2-04, title: Template add/reduce/sl/tp, owner_role: BACKEND, dependencies: [F1-07, F2-03], status: done}
+      - {id: F2-05, title: Test metriche, owner_role: TEST, dependencies: [F2-02], status: todo}
+
+  - id: F3
+    name: Multi-Trader
+    gate: F2
+    tasks:
+      - {id: F3-01, title: Modello Trader e FK, owner_role: DB, dependencies: [F1-01, F2-01], status: done}
+      - {id: F3-02, title: ListenerManager multi-trader, owner_role: BACKEND, dependencies: [F1-04, F3-01], status: done}
+      - {id: F3-03, title: Template personalizzati trader, owner_role: BACKEND, dependencies: [F2-04], status: todo}
+      - {id: F3-04, title: Canali Telegram separati, owner_role: TELEGRAM, dependencies: [F3-01], status: todo}
+      - {id: F3-05, title: Comandi admin Telegram, owner_role: TELEGRAM, dependencies: [F3-01], status: todo}
+      - {id: F3-06, title: Test multi-trader, owner_role: TEST, dependencies: [F3-02, F3-04], status: todo}
+
+  - id: F4
+    name: Web UI
+    gate: F3
+    tasks:
+      - {id: F4-01, title: Setup FastAPI, owner_role: BACKEND, dependencies: [F3-01], status: todo}
+      - {id: F4-02, title: API REST traders/trades, owner_role: BACKEND, dependencies: [F4-01], status: todo}
+      - {id: F4-03, title: API REST templates, owner_role: BACKEND, dependencies: [F3-03, F4-01], status: todo}
+      - {id: F4-04, title: Dashboard frontend, owner_role: BACKEND, dependencies: [F4-01], status: todo}
+      - {id: F4-05, title: Test API, owner_role: TEST, dependencies: [F4-02, F4-03], status: todo}
