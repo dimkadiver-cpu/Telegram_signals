@@ -60,9 +60,9 @@ phases:
     tasks:
       - {id: F2-01, title: RiskConfig e TraderConfig, owner_role: BACKEND, dependencies: [F0-02, F1-01], status: done}
       - {id: F2-02, title: Metric Calculator, owner_role: BACKEND, dependencies: [F1-06, F2-01], status: done}
-      - {id: F2-03, title: Integrazione metriche nel pipeline, owner_role: BACKEND, dependencies: [F1-07, F1-11, F2-02], status: todo}
+      - {id: F2-03, title: Integrazione metriche nel pipeline, owner_role: BACKEND, dependencies: [F1-07, F1-11, F2-02], status: done}
       - {id: F2-04, title: Template add/reduce/sl/tp, owner_role: BACKEND, dependencies: [F1-07, F2-03], status: done}
-      - {id: F2-05, title: Test metriche, owner_role: TEST, dependencies: [F2-02], status: todo}
+      - {id: F2-05, title: Test metriche, owner_role: TEST, dependencies: [F2-02], status: done}
 
   - id: F3
     name: Multi-Trader

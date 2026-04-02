@@ -42,3 +42,17 @@ def test_render_custom_template():
     pos = make_position()
     text = renderer.render(EventType.OPEN, pos)
     assert text == "Signal: LONG BTCUSDT @ 40000.0"
+
+
+def test_render_open_hides_risk_without_sl():
+    renderer = TemplateRenderer()
+    pos = make_position()
+    pos.stop_loss = None
+    pos.take_profit = None
+    metrics = MetricsResult(
+        risk_pct=None, risk_usd=None, rr=None, delta_exposure=4000.0, effective_leverage=0.4
+    )
+    text = renderer.render(EventType.OPEN, pos, metrics)
+    assert "Risk:" not in text
+    assert "RR:" not in text
+    assert "Leva:" in text

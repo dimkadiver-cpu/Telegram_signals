@@ -31,9 +31,9 @@
 ### F2 – Metric Engine
 - F2-01 RiskConfig e TraderConfig — `done`
 - F2-02 Metric Calculator — `done`
-- F2-03 Integrazione metriche nel pipeline — `todo`
+- F2-03 Integrazione metriche nel pipeline — `done`
 - F2-04 Template add/reduce/sl/tp — `done`
-- F2-05 Test metriche — `todo`
+- F2-05 Test metriche — `done`
 
 ### F3 – Multi-Trader
 - F3-01 Modello Trader e FK — `done`

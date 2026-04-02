@@ -4,6 +4,14 @@
 
 ## Gap e Rischi noti
 
+### [2026-04-02] [F2-02] Calcolo rischio direction-aware implementato
+
+**Tipo:** Aggiornamento
+**Severità:** —
+**Descrizione:** Il `MetricCalculator` ora calcola rischio/reward in modo coerente con il lato posizione (`LONG`/`SHORT`), ignorando SL/TP non validi direzionalmente e gestendo l'assenza di SL/TP senza rompere il rendering.
+**Impatto:** Riduzione falsi positivi nelle metriche (es. RR negativo o rischio non sensato).
+**Stato:** Chiuso
+
 ---
 
 ### [2026-04-02] [F2-02] SL/TP non sempre disponibili dall'exchange
