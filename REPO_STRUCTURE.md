@@ -32,6 +32,7 @@ telegram_signals/
 │   │   ├── __init__.py
 │   │   ├── engine.py                 # Jinja2 environment + loader
 │   │   ├── renderer.py               # Rendering template con contesto posizione + metriche
+│   │   ├── store.py                  # Lookup template custom per trader/event type da DB
 │   │   └── default/                  # Template Jinja2 predefiniti
 │   │       ├── open.j2
 │   │       ├── close.j2
@@ -80,7 +81,8 @@ telegram_signals/
 │   │   └── test_templates.py
 │   ├── integration/
 │   │   ├── test_exchange_to_engine.py
-│   │   └── test_telegram_flow.py
+│   │   ├── test_telegram_flow.py
+│   │   └── test_multi_trader_isolation.py
 │   └── e2e/
 │       └── test_full_pipeline.py
 │

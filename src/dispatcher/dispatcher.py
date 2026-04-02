@@ -1,6 +1,6 @@
 import logging
 from aiogram import Bot
-from src.db.models import TelegramDraft, DraftStatus
+from src.db.models import TelegramDraft, DraftStatus, Trader
 from src.db.session import get_session
 
 logger = logging.getLogger(__name__)
@@ -9,12 +9,14 @@ logger = logging.getLogger(__name__)
 class MessageDispatcher:
     """Sends approved drafts to the trader's target Telegram channel."""
 
-    def __init__(self, bot: Bot, target_channel_id: str | None = None) -> None:
+    def __init__(self, bot: Bot) -> None:
         self.bot = bot
-        self.target_channel_id = target_channel_id  # per-trader override from DB
 
     async def dispatch(self, draft: TelegramDraft) -> None:
-        channel = self.target_channel_id or draft.chat_id
+        async for session in get_session():
+            trader = await session.get(Trader, draft.trader_id)
+            channel = trader.telegram_channel_id if trader else draft.chat_id
+
         try:
             await self.bot.send_message(
                 chat_id=channel,

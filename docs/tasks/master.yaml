@@ -70,10 +70,10 @@ phases:
     tasks:
       - {id: F3-01, title: Modello Trader e FK, owner_role: DB, dependencies: [F1-01, F2-01], status: done}
       - {id: F3-02, title: ListenerManager multi-trader, owner_role: BACKEND, dependencies: [F1-04, F3-01], status: done}
-      - {id: F3-03, title: Template personalizzati trader, owner_role: BACKEND, dependencies: [F2-04], status: todo}
-      - {id: F3-04, title: Canali Telegram separati, owner_role: TELEGRAM, dependencies: [F3-01], status: todo}
+      - {id: F3-03, title: Template personalizzati trader, owner_role: BACKEND, dependencies: [F2-04], status: done}
+      - {id: F3-04, title: Canali Telegram separati, owner_role: TELEGRAM, dependencies: [F3-01], status: done}
       - {id: F3-05, title: Comandi admin Telegram, owner_role: TELEGRAM, dependencies: [F3-01], status: todo}
-      - {id: F3-06, title: Test multi-trader, owner_role: TEST, dependencies: [F3-02, F3-04], status: todo}
+      - {id: F3-06, title: Test multi-trader, owner_role: TEST, dependencies: [F3-02, F3-04], status: done}
 
   - id: F4
     name: Web UI
