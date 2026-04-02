@@ -46,11 +46,22 @@
 
 ---
 
-### [2026-04-02] [F2-04] Template sl_hit e tp_hit non testati con metriche
+### [2026-04-02] [F2-04] Copertura test incompleta per template sl_hit/tp_hit
 
 **Tipo:** Gap
 **Severità:** Bassa
-**Descrizione:** I template `sl_hit.j2` e `tp_hit.j2` non ricevono `MetricsResult` nel render perché la posizione è già chiusa quando vengono renderizzati.
-**Impatto:** I template di chiusura non mostrano PnL finale corretto.
-**Proposta:** Passare `realized_pnl` esplicitamente nel contesto del template di chiusura.
-**Stato:** Aperto
+**Descrizione:** I template `sl_hit.j2` e `tp_hit.j2` non dipendono da `MetricsResult` (la posizione è già chiusa) ma mancavano test unitari diretti sul loro rendering.
+**Impatto:** Rischio regressioni non rilevate sui messaggi di chiusura, pur avendo il PnL già presente tramite `realized_pnl`.
+**Proposta:** Aggiungere test unitari dedicati per `SL_HIT`/`TP_HIT` e mantenere il passaggio di `realized_pnl` nel context renderer.
+**Stato:** Chiuso — copertura test aggiunta in `tests/unit/test_templates.py`
+
+---
+
+### [2026-04-02] [F2-04] Template ADD può mostrare leva `None`
+
+**Tipo:** Gap
+**Severità:** Bassa
+**Descrizione:** In `add.j2` la leva veniva sempre renderizzata se esisteva `metrics`, anche quando `effective_leverage=None`.
+**Impatto:** Output telegram ambiguo (es. `Leva: Nonex`) in configurazioni senza `capital_usd`.
+**Proposta:** Renderizzare `Leva` solo con check esplicito `metrics.effective_leverage is not none`.
+**Stato:** Chiuso — fix applicato in `src/templates/default/add.j2`

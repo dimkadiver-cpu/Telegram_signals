@@ -56,3 +56,33 @@ def test_render_open_hides_risk_without_sl():
     assert "Risk:" not in text
     assert "RR:" not in text
     assert "Leva:" in text
+
+
+def test_render_add_hides_leverage_when_missing():
+    renderer = TemplateRenderer()
+    pos = make_position()
+    metrics = MetricsResult(
+        risk_pct=None, risk_usd=None, rr=None, delta_exposure=4000.0, effective_leverage=None
+    )
+    text = renderer.render(EventType.ADD, pos, metrics)
+    assert "ADD" in text
+    assert "Exposure:" in text
+    assert "Leva:" not in text
+
+
+def test_render_sl_hit_uses_realized_pnl():
+    renderer = TemplateRenderer()
+    pos = make_position()
+    pos.realized_pnl = -250.0
+    text = renderer.render(EventType.SL_HIT, pos)
+    assert "STOP LOSS HIT" in text
+    assert "-250" in text
+
+
+def test_render_tp_hit_uses_realized_pnl():
+    renderer = TemplateRenderer()
+    pos = make_position()
+    pos.realized_pnl = 500.0
+    text = renderer.render(EventType.TP_HIT, pos)
+    assert "TAKE PROFIT HIT" in text
+    assert "500" in text
