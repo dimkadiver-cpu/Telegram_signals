@@ -11,7 +11,7 @@
 ### F0 – Setup & Fondamenta
 - F0-01 Inizializza struttura progetto — `done`
 - F0-02 Config e Settings — `done`
-- F0-03 DB async e migrazioni — `todo`
+- F0-03 DB async e migrazioni — `done`
 
 ### F1 – MVP Core
 - F1-01 Modelli DB — `done`
@@ -25,8 +25,8 @@
 - F1-09 Handler Telegram — `done`
 - F1-10 Dispatcher — `done`
 - F1-11 Entry point main.py — `done`
-- F1-12 Test unitari fase 1 — `wip`
-- F1-13 Test integrazione fase 1 — `todo`
+- F1-12 Test unitari fase 1 — `done`
+- F1-13 Test integrazione fase 1 — `done`
 
 ### F2 – Metric Engine
 - F2-01 RiskConfig e TraderConfig — `done`

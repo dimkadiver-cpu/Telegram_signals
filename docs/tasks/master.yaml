@@ -51,8 +51,8 @@ phases:
       - {id: F1-09, title: Handler Telegram, owner_role: TELEGRAM, dependencies: [F1-08], status: done}
       - {id: F1-10, title: Dispatcher, owner_role: TELEGRAM, dependencies: [F1-09], status: done}
       - {id: F1-11, title: Entry point main.py, owner_role: BACKEND, dependencies: [F1-04, F1-05, F1-06, F1-07, F1-08, F1-10], status: done}
-      - {id: F1-12, title: Test unitari fase 1, owner_role: TEST, dependencies: [F1-05, F1-06, F1-07], status: wip}
-      - {id: F1-13, title: Test integrazione fase 1, owner_role: TEST, dependencies: [F1-11, F1-12], status: todo}
+      - {id: F1-12, title: Test unitari fase 1, owner_role: TEST, dependencies: [F1-05, F1-06, F1-07], status: done}
+      - {id: F1-13, title: Test integrazione fase 1, owner_role: TEST, dependencies: [F1-11, F1-12], status: done}
 
   - id: F2
     name: Metric Engine
