@@ -34,7 +34,7 @@ phases:
         outputs: [src/db/session.py, src/db/migrations/env.py]
         acceptance_checks:
           - PYTHONPATH=. python -c "from src.db.session import init_db"
-        status: todo
+        status: done
 
   - id: F1
     name: MVP Core
