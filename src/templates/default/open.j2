@@ -1,0 +1,11 @@
+📈 *OPEN {{ side }}* — `{{ symbol }}`
+
+Entry:  `{{ entry_price }}`
+Size:   `{{ size }}`
+{% if stop_loss %}SL:     `{{ stop_loss }}`{% endif %}
+{% if take_profit %}TP:     `{{ take_profit }}`{% endif %}
+{% if metrics %}
+Risk:   `{{ metrics.risk_pct }}%` (${{ metrics.risk_usd }})
+{% if metrics.rr %}RR:     `{{ metrics.rr }}`{% endif %}
+Leva:   `{{ metrics.effective_leverage }}x`
+{% endif %}

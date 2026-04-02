@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "telegram-signals"
+version = "0.1.0"
+description = "Sistema di signalizzazione trading manuale via Telegram"
+requires-python = ">=3.11"
+dependencies = [
+    # Exchange
+    "ccxt>=4.2",
+    "python-binance>=1.0.19",
+    # Telegram
+    "aiogram>=3.4",
+    # Template
+    "jinja2>=3.1",
+    # Database
+    "sqlmodel>=0.0.16",
+    "sqlalchemy[asyncio]>=2.0",
+    "aiosqlite>=0.19",          # SQLite async driver (dev)
+    "asyncpg>=0.29",            # PostgreSQL async driver (prod)
+    "alembic>=1.13",
+    # Config
+    "pydantic-settings>=2.2",
+    "python-dotenv>=1.0",
+    # Utils
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+    "mypy>=1.9",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
