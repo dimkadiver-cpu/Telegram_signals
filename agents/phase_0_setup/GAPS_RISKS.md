@@ -64,3 +64,25 @@
 **Impatto:** Il bot parte senza credenziali valide.
 **Proposta:** Aggiungere validazione esplicita dei campi obbligatori in `Settings` con `@validator`.
 **Stato:** Aperto
+
+---
+
+### [2026-04-02] [F0-03] `create_tables()` non creava tabelle senza import modelli
+
+**Tipo:** Errore
+**Severità:** Alta
+**Descrizione:** `create_tables()` chiamava `SQLModel.metadata.create_all()` ma senza import esplicito dei modelli; metadata risultava vuota e non veniva creata alcuna tabella.
+**Impatto:** Il DB risultava "inizializzato" senza schema, rompendo le operazioni runtime su repository/sessioni.
+**Proposta:** Import side-effect di `src.db.models` in `create_tables()` e guard-rail con errore esplicito se `init_db()` non è stato chiamato.
+**Stato:** Risolto
+
+---
+
+### [2026-04-02] [F0] Python runtime locale non allineato a `requires-python`
+
+**Tipo:** Gap
+**Severità:** Media
+**Descrizione:** `pyproject.toml` richiede Python `>=3.11`, ma l'ambiente corrente usa Python `3.10.19`.
+**Impatto:** Alcuni check possono passare localmente ma fallire in CI/packaging, o viceversa.
+**Proposta:** Eseguire i check F0 in un ambiente Python 3.11+ (es. venv dedicato o CI matrix).
+**Stato:** Aperto
