@@ -1,5 +1,11 @@
 # GAPS & RISKS – Fase 1: MVP Core
 
+## Stato al 2026-04-02 (post-F3)
+
+- La Fase 1 resta **completata** lato delivery MVP e regressione test.
+- Alcuni gap identificati in F1 restano **aperti** come debito tecnico (hardening/reliability).
+- La voce F1-11 è stata **superata** dall'evoluzione runtime introdotta in F3.
+
 ---
 
 ## Gap e Rischi noti
@@ -76,7 +82,8 @@
 **Descrizione:** `main.py` usa un singolo `BinanceListener` con credenziali da config globale. `ListenerManager` per multi-trader non è ancora integrato nel wiring.
 **Impatto:** Sistema supporta un solo trader fino alla Fase 3.
 **Proposta:** Accettato come limitazione MVP. Integrare `ListenerManager` in Fase 3.
-**Stato:** Accettato — limitazione voluta Fase 1
+**Aggiornamento post-F3 (2026-04-02):** `ListenerManager` è ora integrato nel wiring runtime in `src/main.py` tramite avvio orchestrato `start_all()`.
+**Stato:** Chiuso — superato da implementazione F3
 
 ---
 
