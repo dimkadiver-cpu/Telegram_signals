@@ -31,7 +31,7 @@ class MessageDispatcher:
                 )
                 break
             except TelegramRetryAfter as exc:
-                wait = exc.retry_after if exc.retry_after else backoff
+                wait = exc.retry_after if exc.retry_after is not None else backoff
                 logger.warning(
                     "Telegram 429 on draft %d (attempt %d/%d). Retrying in %ds.",
                     draft.id, attempt, _MAX_RETRIES, wait,
