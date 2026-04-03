@@ -1,5 +1,14 @@
 🛑 *STOP LOSS HIT* — `{{ symbol }}`
 
-Side:  `{{ side }}`
-Entry: `{{ entry_price }}`
-PnL:   `{{ realized_pnl }} USDT`
+Side:   `{{ side }}`
+Entry:  `{{ entry_price }}`
+PnL:    `{{ realized_pnl }} USDT`
+{% if metrics and metrics.is_final_close %}
+{% if metrics.total_pnl_usd is not none %}
+PnL trade: `{{ "+" if metrics.total_pnl_usd >= 0 else "" }}{{ metrics.total_pnl_usd }} USDT`{% if metrics.total_pnl_pct is not none %} (`{{ "+" if metrics.total_pnl_pct >= 0 else "" }}{{ metrics.total_pnl_pct }}%`){% endif %}
+
+{% endif %}
+{% if metrics.trade_duration_hours is not none %}
+Durata: `{{ metrics.trade_duration_hours }}h`
+{% endif %}
+{% endif %}

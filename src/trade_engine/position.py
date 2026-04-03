@@ -23,6 +23,10 @@ class Position:
     take_profits: list[float] = field(default_factory=list)
     opened_at: datetime = field(default_factory=datetime.utcnow)
     closed_at: datetime | None = None
+    # Multi-TP tracking
+    initial_size: float = 0.0
+    tp_hit_count: int = 0
+    cumulative_realized_pnl: float = 0.0
 
     def unrealized_pnl(self, current_price: float) -> float:
         if self.side == Side.LONG:

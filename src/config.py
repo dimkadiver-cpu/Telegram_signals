@@ -28,3 +28,8 @@ class Settings(BaseSettings):
 
     # SL movement detection
     breakeven_tolerance_pct: float = 0.5  # % tolerance around entry to classify SL as breakeven
+
+    # Auto-approve: comma-separated EventType values that bypass manual review globally.
+    # Per-trader auto_approve_events overrides this when set.
+    # Example: "SL_HIT,TP_HIT,SL_TO_BREAKEVEN,LIQUIDATION,ORDER_CANCELLED"
+    auto_approve_events: str = ""
