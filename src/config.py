@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     binance_api_secret: str = ""
     binance_testnet: bool = False
 
+    # Bybit
+    bybit_api_key: str = ""
+    bybit_api_secret: str = ""
+    bybit_testnet: bool = False
+
     # Telegram
     telegram_bot_token: str = ""
     telegram_review_chat_id: str = ""
