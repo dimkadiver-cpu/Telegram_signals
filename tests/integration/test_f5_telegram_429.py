@@ -24,9 +24,7 @@ def _make_bot(side_effects):
 
 
 def _make_retry_after(seconds: int = 5) -> TelegramRetryAfter:
-    exc = MagicMock(spec=TelegramRetryAfter)
-    exc.retry_after = seconds
-    return exc
+    return TelegramRetryAfter(method=MagicMock(), message="Too Many Requests", retry_after=seconds)
 
 
 @pytest.mark.asyncio
