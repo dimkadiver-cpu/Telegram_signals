@@ -24,8 +24,9 @@ class MetricCalculator:
                 risk_pct = (sl_distance / position.avg_entry) * 100
                 risk_usd = (risk_pct / 100) * config.capital_usd
 
-                if position.take_profit:
-                    tp_distance = self._favorable_distance(position, position.take_profit)
+                first_tp = position.take_profits[0] if position.take_profits else None
+                if first_tp:
+                    tp_distance = self._favorable_distance(position, first_tp)
                     rr = tp_distance / sl_distance if tp_distance > 0 else None
 
         return MetricsResult(

@@ -18,3 +18,4 @@ class TradeEvent:
     stop_loss: float | None = None
     take_profit: float | None = None
     order_id: str | None = None
+    order_type: str | None = None  # e.g. "STOP_MARKET", "TAKE_PROFIT_MARKET"

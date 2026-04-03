@@ -10,14 +10,21 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_BREAKEVEN_TOLERANCE_PCT = 0.5
+
 
 class TradeEngine:
     """Maintains position state by applying normalized trade events."""
 
-    def __init__(self, position_repo: "PositionRepository | None" = None) -> None:
+    def __init__(
+        self,
+        position_repo: "PositionRepository | None" = None,
+        breakeven_tolerance_pct: float = _DEFAULT_BREAKEVEN_TOLERANCE_PCT,
+    ) -> None:
         # In-memory store keyed by (trader_id, symbol); persisted via DB layer separately
         self._positions: dict[tuple[str, str], Position] = {}
         self._repo = position_repo
+        self._breakeven_tolerance_pct = breakeven_tolerance_pct
 
     def restore_positions(self, positions: list[Position]) -> None:
         """Populate in-memory state from previously persisted positions."""
@@ -42,6 +49,20 @@ class TradeEngine:
                 position = self._reduce(key, event)
             case EventType.CLOSE | EventType.SL_HIT | EventType.TP_HIT | EventType.LIQUIDATION:
                 position = self._close(key, event)
+            case EventType.ORDER_CANCELLED:
+                position = self._order_cancelled(key, event)
+                if position.status == PositionStatus.CLOSED and key not in self._positions:
+                    # Signal cancelled with no prior position: don't persist phantom state
+                    if self._repo is not None:
+                        await self._repo.save(position)
+                    return position
+            case EventType.SL_TO_BREAKEVEN | EventType.SL_TO_PROFIT:
+                event = self._classify_sl_event(key, event)
+                position = self._update_sl(key, event)
+            case EventType.TP_MODIFIED:
+                position = self._tp_modified(key, event)
+            case EventType.TP_ADDED:
+                position = self._tp_added(key, event)
             case _:
                 logger.warning("Unhandled event type: %s", event.event_type)
                 position = self._positions.get(key, self._open(key, event))
@@ -54,6 +75,8 @@ class TradeEngine:
     def get_position(self, trader_id: str, symbol: str) -> Position | None:
         return self._positions.get((trader_id, symbol))
 
+    # ── private helpers ──────────────────────────────────────────────────────
+
     def _open(self, key: tuple, event: TradeEvent) -> Position:
         return Position(
             trader_id=event.trader_id,
@@ -62,7 +85,7 @@ class TradeEngine:
             size=event.size,
             avg_entry=event.price,
             stop_loss=event.stop_loss,
-            take_profit=event.take_profit,
+            take_profits=[event.take_profit] if event.take_profit else [],
         )
 
     def _add(self, key: tuple, event: TradeEvent) -> Position:
@@ -85,4 +108,89 @@ class TradeEngine:
             pos.realized_pnl = (pos.avg_entry - event.price) * pos.size
         pos.status = PositionStatus.CLOSED
         pos.closed_at = datetime.utcnow()
+        return pos
+
+    def _order_cancelled(self, key: tuple, event: TradeEvent) -> Position:
+        """Handle cancellation of a pending order.
+
+        - Position open → DCA order cancelled; position stays open, DCA plan abandoned.
+        - No position → signal cancelled entirely; remove any phantom state and reset.
+        """
+        if key in self._positions:
+            # DCA order cancelled: position remains, log and return current state
+            pos = self._positions[key]
+            logger.info(
+                "DCA order cancelled for %s/%s (order_id=%s, type=%s).",
+                event.trader_id, event.symbol, event.order_id, event.order_type,
+            )
+            return pos
+        else:
+            # Signal cancelled before entry: return a synthetic closed position
+            logger.info(
+                "Signal cancelled (no open position) for %s/%s.",
+                event.trader_id, event.symbol,
+            )
+            pos = self._open(key, event)
+            pos.status = PositionStatus.CLOSED
+            pos.closed_at = datetime.utcnow()
+            # Remove from map so next entry is treated as a fresh signal
+            self._positions.pop(key, None)
+            return pos
+
+    def _classify_sl_event(self, key: tuple, event: TradeEvent) -> TradeEvent:
+        """Reclassify SL_TO_BREAKEVEN to SL_TO_PROFIT when new SL is in profit territory."""
+        pos = self._positions.get(key)
+        if pos is None or event.stop_loss is None:
+            return event
+        new_sl = event.stop_loss
+        entry = pos.avg_entry
+        tolerance = entry * (self._breakeven_tolerance_pct / 100)
+        if pos.side == Side.LONG:
+            in_profit = new_sl > entry + tolerance
+        else:
+            in_profit = new_sl < entry - tolerance
+        from dataclasses import replace as dc_replace
+        return dc_replace(
+            event,
+            event_type=EventType.SL_TO_PROFIT if in_profit else EventType.SL_TO_BREAKEVEN,
+        )
+
+    def _update_sl(self, key: tuple, event: TradeEvent) -> Position:
+        """Move stop loss to the new value carried by the event."""
+        pos = self._positions.get(key)
+        if pos is None:
+            logger.warning("SL move received but no open position for %s/%s.", event.trader_id, event.symbol)
+            pos = self._open(key, event)
+        pos.stop_loss = event.stop_loss
+        logger.info(
+            "%s for %s/%s → new SL: %s",
+            event.event_type, event.trader_id, event.symbol, event.stop_loss,
+        )
+        return pos
+
+    def _tp_modified(self, key: tuple, event: TradeEvent) -> Position:
+        """Replace the closest TP level with the new value from the event."""
+        pos = self._positions.get(key)
+        if pos is None:
+            logger.warning("TP_MODIFIED received but no open position for %s/%s.", event.trader_id, event.symbol)
+            pos = self._open(key, event)
+        if event.take_profit is not None:
+            if pos.take_profits:
+                # Replace the nearest TP (first in list, assumed sorted asc for LONG)
+                pos.take_profits[0] = event.take_profit
+            else:
+                pos.take_profits.append(event.take_profit)
+            logger.info("TP_MODIFIED for %s/%s → new TP: %s", event.trader_id, event.symbol, event.take_profit)
+        return pos
+
+    def _tp_added(self, key: tuple, event: TradeEvent) -> Position:
+        """Add a new TP level to the position's list."""
+        pos = self._positions.get(key)
+        if pos is None:
+            logger.warning("TP_ADDED received but no open position for %s/%s.", event.trader_id, event.symbol)
+            pos = self._open(key, event)
+        if event.take_profit is not None and event.take_profit not in pos.take_profits:
+            pos.take_profits.append(event.take_profit)
+            pos.take_profits.sort(reverse=(pos.side == Side.SHORT))
+            logger.info("TP_ADDED for %s/%s → TP list: %s", event.trader_id, event.symbol, pos.take_profits)
         return pos

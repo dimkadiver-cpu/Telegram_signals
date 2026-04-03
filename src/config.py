@@ -20,3 +20,6 @@ class Settings(BaseSettings):
     # Risk
     risk_capital_usd: float = 10_000.0
     risk_pct: float = 1.0
+
+    # SL movement detection
+    breakeven_tolerance_pct: float = 0.5  # % tolerance around entry to classify SL as breakeven

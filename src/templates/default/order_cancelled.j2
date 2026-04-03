@@ -1,0 +1,6 @@
+❌ *ORDINE CANCELLATO* — `{{ symbol }}`
+
+Side:   `{{ side }}`
+{% if event and event.order_type %}Tipo:   `{{ event.order_type }}`
+{% endif %}{% if event and event.order_id %}ID:     `{{ event.order_id }}`
+{% endif %}

@@ -20,7 +20,7 @@ class Position:
     status: PositionStatus = PositionStatus.OPEN
     realized_pnl: float = 0.0
     stop_loss: float | None = None
-    take_profit: float | None = None
+    take_profits: list[float] = field(default_factory=list)
     opened_at: datetime = field(default_factory=datetime.utcnow)
     closed_at: datetime | None = None
 

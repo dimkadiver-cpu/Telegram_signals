@@ -13,7 +13,7 @@ def make_position(sl: float | None = None, tp: float | None = None) -> Position:
         size=0.1,
         avg_entry=40000.0,
         stop_loss=sl,
-        take_profit=tp,
+        take_profits=[tp] if tp else [],
     )
 
 
@@ -45,7 +45,7 @@ def test_metrics_short_position():
     config = RiskConfig(capital_usd=10_000)
     pos = Position(
         trader_id="t1", symbol="BTCUSDT", side=Side.SHORT,
-        size=0.1, avg_entry=40000.0, stop_loss=42000.0, take_profit=36000.0
+        size=0.1, avg_entry=40000.0, stop_loss=42000.0, take_profits=[36000.0]
     )
     result = calc.calculate(pos, config, current_price=40000)
     assert result.risk_pct == pytest.approx(5.0)
