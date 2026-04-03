@@ -24,6 +24,7 @@ class Trader(SQLModel, table=True):
     telegram_review_chat_id: str
     telegram_channel_id: str
     is_active: bool = True
+    exchange: str = "binance"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
