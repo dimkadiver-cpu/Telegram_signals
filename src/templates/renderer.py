@@ -44,6 +44,10 @@ class TemplateRenderer:
             "realized_pnl": position.realized_pnl,
             "metrics": metrics,
             "event": event,
+            # Multi-TP convenience vars (mirrors metrics fields for template simplicity)
+            "tp_hit_count": position.tp_hit_count,
+            "initial_size": position.initial_size,
+            "cumulative_pnl": position.cumulative_realized_pnl,
         }
         template_override = custom_template or self._custom_template
         if template_override:

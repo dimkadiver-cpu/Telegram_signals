@@ -1,5 +1,26 @@
-🎯 *TAKE PROFIT HIT* — `{{ symbol }}`
+{% if metrics and metrics.is_final_close %}
+✅ *TP {{ metrics.tp_index }} HIT — CHIUSURA TOTALE* — `{{ symbol }}`
 
-Side:  `{{ side }}`
-Entry: `{{ entry_price }}`
-PnL:   `+{{ realized_pnl }} USDT`
+Side:   `{{ side }}`
+Entry:  `{{ entry_price }}`
+{% if metrics.total_pnl_usd is not none %}
+PnL trade: `{{ "+" if metrics.total_pnl_usd >= 0 else "" }}{{ metrics.total_pnl_usd }} USDT`{% if metrics.total_pnl_pct is not none %} (`{{ "+" if metrics.total_pnl_pct >= 0 else "" }}{{ metrics.total_pnl_pct }}%`){% endif %}
+
+{% endif %}
+{% if metrics.trade_duration_hours is not none %}
+Durata: `{{ metrics.trade_duration_hours }}h`
+{% endif %}
+{% else %}
+🎯 *TP {{ metrics.tp_index if metrics and metrics.tp_index else "" }} HIT* — `{{ symbol }}`
+
+Side:   `{{ side }}`
+Entry:  `{{ entry_price }}`
+PnL:    `+{{ realized_pnl }} USDT`
+Size rimasta: `{{ size }}`
+{% if metrics %}
+{% if metrics.risk_pct is not none and metrics.risk_usd is not none %}
+Risk:   `{{ metrics.risk_pct }}%` (${{ metrics.risk_usd }})
+{% endif %}
+{% if metrics.rr %}RR:     `{{ metrics.rr }}`{% endif %}
+{% endif %}
+{% endif %}

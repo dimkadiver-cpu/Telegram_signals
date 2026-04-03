@@ -24,10 +24,19 @@ logger = logging.getLogger(__name__)
 settings = Settings()
 
 
+def _resolve_auto_approve_set(trader: Trader, global_setting: str) -> set[str]:
+    """Return the set of EventType values that bypass review for this trader."""
+    raw = (trader.auto_approve_events or "").strip() or global_setting.strip()
+    return {v.strip().upper() for v in raw.split(",") if v.strip()}
+
+
 async def build_pipeline(
-    bot, draft_manager: DraftManager, position_repo: PositionRepository
+    bot,
+    draft_manager: DraftManager,
+    dispatcher: MessageDispatcher,
+    position_repo: PositionRepository,
 ) -> tuple:
-    """Wire normalizer → engine → metrics → template → draft.
+    """Wire normalizer → engine → metrics → template → draft/dispatch.
 
     Returns (on_raw_event callback, TradeEngine) so the caller can restore
     persisted positions into the engine before starting listeners.
@@ -63,19 +72,32 @@ async def build_pipeline(
             capital_usd=settings.risk_capital_usd,
             risk_pct=settings.risk_pct,
         )
-        metrics = calculator.calculate(position, risk_config, current_price=event.price)
+        metrics = calculator.calculate(
+            position, risk_config, current_price=event.price, event_type=event.event_type
+        )
         custom_template = await template_store.get_template(trader.id, event.event_type)
         message_text = renderer.render(
             event.event_type,
             position,
             metrics,
             custom_template=custom_template,
+            event=event,
         )
-        await draft_manager.send_draft(
-            trader_id=trader.id,
-            review_chat_id=trader.telegram_review_chat_id,
-            message_text=message_text,
-        )
+
+        auto_approve_set = _resolve_auto_approve_set(trader, settings.auto_approve_events)
+        if event.event_type.value in auto_approve_set:
+            draft = await draft_manager.create_draft_only(
+                trader_id=trader.id,
+                review_chat_id=trader.telegram_review_chat_id,
+                message_text=message_text,
+            )
+            await dispatcher.dispatch(draft)
+        else:
+            await draft_manager.send_draft(
+                trader_id=trader.id,
+                review_chat_id=trader.telegram_review_chat_id,
+                message_text=message_text,
+            )
 
     return on_raw_event, engine
 
@@ -91,7 +113,7 @@ async def main() -> None:
     draft_manager = DraftManager(bot)
 
     position_repo = PositionRepository()
-    on_event, engine = await build_pipeline(bot, draft_manager, position_repo)
+    on_event, engine = await build_pipeline(bot, draft_manager, dispatcher, position_repo)
     listener_manager = ListenerManager(on_event=on_event)
 
     open_positions = await position_repo.load_open_positions()

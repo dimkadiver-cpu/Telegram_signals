@@ -13,6 +13,30 @@ class DraftManager:
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
 
+    async def create_draft_only(
+        self,
+        trader_id: int,
+        review_chat_id: str,
+        message_text: str,
+        trade_id: int | None = None,
+    ) -> TelegramDraft:
+        """Create an auto-approved draft without sending to the review chat."""
+        async for session in get_session():
+            draft = TelegramDraft(
+                trader_id=trader_id,
+                trade_id=trade_id,
+                chat_id=review_chat_id,
+                message_text=message_text,
+                status=DraftStatus.APPROVED,
+            )
+            session.add(draft)
+            await session.commit()
+            await session.refresh(draft)
+            logger.info(
+                "Auto-approved draft %d created for trader %d (no review)", draft.id, trader_id
+            )
+            return draft
+
     async def send_draft(self, trader_id: int, review_chat_id: str,
                          message_text: str, trade_id: int | None = None) -> TelegramDraft:
         async for session in get_session():

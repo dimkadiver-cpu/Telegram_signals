@@ -47,7 +47,9 @@ class TradeEngine:
                 position = self._add(key, event)
             case EventType.REDUCE:
                 position = self._reduce(key, event)
-            case EventType.CLOSE | EventType.SL_HIT | EventType.TP_HIT | EventType.LIQUIDATION:
+            case EventType.TP_HIT:
+                position = self._tp_hit(key, event)
+            case EventType.CLOSE | EventType.SL_HIT | EventType.LIQUIDATION:
                 position = self._close(key, event)
             case EventType.ORDER_CANCELLED:
                 position = self._order_cancelled(key, event)
@@ -86,6 +88,7 @@ class TradeEngine:
             avg_entry=event.price,
             stop_loss=event.stop_loss,
             take_profits=[event.take_profit] if event.take_profit else [],
+            initial_size=event.size,
         )
 
     def _add(self, key: tuple, event: TradeEvent) -> Position:
@@ -100,12 +103,53 @@ class TradeEngine:
         pos.size = max(0.0, pos.size - event.size)
         return pos
 
+    def _tp_hit(self, key: tuple, event: TradeEvent) -> Position:
+        """Handle a TP fill: partial close or final close depending on remaining size."""
+        pos = self._positions.get(key) or self._open(key, event)
+        fill_size = min(event.size, pos.size)
+
+        # Compute PnL for this fill only
+        if pos.side == Side.LONG:
+            partial_pnl = (event.price - pos.avg_entry) * fill_size
+        else:
+            partial_pnl = (pos.avg_entry - event.price) * fill_size
+
+        pos.cumulative_realized_pnl += partial_pnl
+        pos.size = max(0.0, pos.size - fill_size)
+        pos.tp_hit_count += 1
+
+        # Remove the TP level just hit (first remaining level)
+        if pos.take_profits:
+            pos.take_profits.pop(0)
+
+        if pos.size < 1e-8:
+            # Final TP — close position
+            pos.size = 0.0
+            pos.realized_pnl = pos.cumulative_realized_pnl
+            pos.status = PositionStatus.CLOSED
+            pos.closed_at = datetime.utcnow()
+            self._positions.pop(key, None)
+            logger.info(
+                "TP_HIT final #%d for %s/%s — full close, total PnL=%.2f",
+                pos.tp_hit_count, event.trader_id, event.symbol, pos.realized_pnl,
+            )
+        else:
+            # Intermediate TP — position remains open with reduced size
+            self._positions[key] = pos
+            logger.info(
+                "TP_HIT intermediate #%d for %s/%s — remaining size=%.4f, cumPnL=%.2f",
+                pos.tp_hit_count, event.trader_id, event.symbol, pos.size, pos.cumulative_realized_pnl,
+            )
+        return pos
+
     def _close(self, key: tuple, event: TradeEvent) -> Position:
         pos = self._positions.pop(key, None) or self._open(key, event)
         if pos.side == Side.LONG:
-            pos.realized_pnl = (event.price - pos.avg_entry) * pos.size
+            close_pnl = (event.price - pos.avg_entry) * pos.size
         else:
-            pos.realized_pnl = (pos.avg_entry - event.price) * pos.size
+            close_pnl = (pos.avg_entry - event.price) * pos.size
+        pos.realized_pnl = pos.cumulative_realized_pnl + close_pnl
+        pos.cumulative_realized_pnl = pos.realized_pnl
         pos.status = PositionStatus.CLOSED
         pos.closed_at = datetime.utcnow()
         return pos

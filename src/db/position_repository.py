@@ -1,3 +1,4 @@
+import json
 import logging
 from sqlmodel import select
 from src.db.models import Position as DbPosition, TradeStatus
@@ -28,6 +29,8 @@ class PositionRepository:
                     await session.commit()
                 return
 
+            tps_json = json.dumps(pos.take_profits)
+            first_tp = pos.take_profits[0] if pos.take_profits else None
             if db_pos is None:
                 db_pos = DbPosition(
                     trader_id=int(pos.trader_id),
@@ -36,7 +39,11 @@ class PositionRepository:
                     size=pos.size,
                     avg_entry=pos.avg_entry,
                     stop_loss=pos.stop_loss,
-                    take_profit=pos.take_profit,
+                    take_profit=first_tp,
+                    take_profits_json=tps_json,
+                    initial_size=pos.initial_size or pos.size,
+                    tp_hit_count=pos.tp_hit_count,
+                    cumulative_realized_pnl=pos.cumulative_realized_pnl,
                     status=TradeStatus.OPEN,
                 )
                 session.add(db_pos)
@@ -44,7 +51,10 @@ class PositionRepository:
                 db_pos.size = pos.size
                 db_pos.avg_entry = pos.avg_entry
                 db_pos.stop_loss = pos.stop_loss
-                db_pos.take_profit = pos.take_profit
+                db_pos.take_profit = first_tp
+                db_pos.take_profits_json = tps_json
+                db_pos.tp_hit_count = pos.tp_hit_count
+                db_pos.cumulative_realized_pnl = pos.cumulative_realized_pnl
 
             await session.commit()
 
@@ -56,6 +66,10 @@ class PositionRepository:
             result = await session.execute(stmt)
             rows = result.scalars().all()
             for row in rows:
+                try:
+                    tps = json.loads(row.take_profits_json or "[]")
+                except (json.JSONDecodeError, TypeError):
+                    tps = [row.take_profit] if row.take_profit else []
                 pos = Position(
                     trader_id=str(row.trader_id),
                     symbol=row.symbol,
@@ -63,7 +77,10 @@ class PositionRepository:
                     size=row.size,
                     avg_entry=row.avg_entry,
                     stop_loss=row.stop_loss,
-                    take_profit=row.take_profit,
+                    take_profits=tps,
+                    initial_size=row.initial_size or row.size,
+                    tp_hit_count=row.tp_hit_count,
+                    cumulative_realized_pnl=row.cumulative_realized_pnl,
                 )
                 positions.append(pos)
         return positions

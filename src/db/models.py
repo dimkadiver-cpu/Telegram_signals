@@ -26,6 +26,9 @@ class Trader(SQLModel, table=True):
     is_active: bool = True
     exchange: str = "binance"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # Comma-separated EventType values to auto-publish without manual review.
+    # Empty string = use global setting from config. Overrides global when set.
+    auto_approve_events: str = ""
 
 
 class Trade(SQLModel, table=True):
@@ -50,9 +53,14 @@ class Position(SQLModel, table=True):
     size: float
     avg_entry: float
     stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
+    take_profit: Optional[float] = None          # kept for backward compat (first TP)
+    take_profits_json: str = "[]"                # JSON array of all TP levels
     status: TradeStatus = TradeStatus.OPEN
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # Multi-TP tracking
+    initial_size: float = 0.0
+    tp_hit_count: int = 0
+    cumulative_realized_pnl: float = 0.0
 
 
 class TelegramDraft(SQLModel, table=True):
