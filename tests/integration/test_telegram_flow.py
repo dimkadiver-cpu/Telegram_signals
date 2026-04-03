@@ -14,7 +14,7 @@ def test_render_and_draft_text():
         size=1.0,
         avg_entry=2000.0,
         stop_loss=1900.0,
-        take_profit=2300.0,
+        take_profits=[2300.0],
     )
     metrics = MetricsResult(risk_pct=5.0, risk_usd=500.0, rr=3.0,
                             delta_exposure=2000.0, effective_leverage=0.2)

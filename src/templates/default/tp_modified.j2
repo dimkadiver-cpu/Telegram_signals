@@ -1,0 +1,6 @@
+✏️ *TP MODIFICATO* — `{{ symbol }}`
+
+Side:       `{{ side }}`
+Nuovo TP:   `{{ take_profit }}`
+{% if take_profits | length > 1 %}Tutti TP:   {% for tp in take_profits %}`{{ tp }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}

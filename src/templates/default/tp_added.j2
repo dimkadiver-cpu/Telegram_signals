@@ -1,0 +1,5 @@
+➕ *TP AGGIUNTO* — `{{ symbol }}`
+
+Side:       `{{ side }}`
+Nuovo TP:   `{{ event.take_profit if event else take_profit }}`
+Tutti TP:   {% for tp in take_profits %}`{{ tp }}`{% if not loop.last %}, {% endif %}{% endfor %}

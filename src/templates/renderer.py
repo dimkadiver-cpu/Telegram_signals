@@ -1,3 +1,4 @@
+from src.events.models import TradeEvent
 from src.events.types import EventType
 from src.trade_engine.position import Position
 from src.metrics.models import MetricsResult
@@ -11,6 +12,11 @@ _EVENT_TEMPLATE_MAP: dict[EventType, str] = {
     EventType.SL_HIT: "sl_hit.j2",
     EventType.TP_HIT: "tp_hit.j2",
     EventType.LIQUIDATION: "close.j2",
+    EventType.ORDER_CANCELLED: "order_cancelled.j2",
+    EventType.SL_TO_BREAKEVEN: "sl_to_breakeven.j2",
+    EventType.SL_TO_PROFIT: "sl_to_profit.j2",
+    EventType.TP_MODIFIED: "tp_modified.j2",
+    EventType.TP_ADDED: "tp_added.j2",
 }
 
 
@@ -24,16 +30,20 @@ class TemplateRenderer:
 
     def render(self, event_type: EventType, position: Position,
                metrics: MetricsResult | None = None,
-               custom_template: str | None = None) -> str:
+               custom_template: str | None = None,
+               event: TradeEvent | None = None) -> str:
         context = {
             "symbol": position.symbol,
             "side": position.side.value,
             "size": position.size,
             "entry_price": position.avg_entry,
             "stop_loss": position.stop_loss,
-            "take_profit": position.take_profit,
+            "take_profits": position.take_profits,
+            # keep singular for backwards compat with existing templates
+            "take_profit": position.take_profits[0] if position.take_profits else None,
             "realized_pnl": position.realized_pnl,
             "metrics": metrics,
+            "event": event,
         }
         template_override = custom_template or self._custom_template
         if template_override:
